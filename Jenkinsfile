@@ -23,14 +23,13 @@ pipeline {
                 
                 echo 'Launching locked PHP 7.1 + Composer 1.x container matrix...'
                 script {
-                    // Invokes the certified public image containing matching legacy php+composer runtimes
                     sh '''
                         docker run --rm \
                           -v ${WORKSPACE}:/app \
                           -w /app \
                           -e PDO_MYSQL_ATTR_SSL_CA=false \
                           mileschou/composer:1.10-php7.1 \
-                          bash -c "composer install --no-interaction --prefer-dist --ignore-platform-reqs && ./vendor/bin/phpunit"
+                          bash -c "composer install --no-interaction --prefer-dist --ignore-platform-reqs && ./vendor/bin/phpunit && chown -R 111:117 /app"
                     '''
                 }
             }
