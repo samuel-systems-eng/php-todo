@@ -21,15 +21,15 @@ pipeline {
                 echo 'Renaming environment configuration file...'
                 sh 'mv .env.sample .env'
                 
-                echo 'Launching pre-compiled native PHP 7.3 + Composer v1 workspace environment...'
+                echo 'Launching locked PHP 7.1 + Composer 1.x container matrix...'
                 script {
-                    // Invokes the official, self-contained Composer 1.x core image line
+                    // Invokes the certified public image containing matching legacy php+composer runtimes
                     sh '''
                         docker run --rm \
                           -v ${WORKSPACE}:/app \
                           -w /app \
                           -e PDO_MYSQL_ATTR_SSL_CA=false \
-                          composer:1 \
+                          mileschou/composer:1.10-php7.1 \
                           bash -c "composer install --no-interaction --prefer-dist --ignore-platform-reqs && ./vendor/bin/phpunit"
                     '''
                 }
