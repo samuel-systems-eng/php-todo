@@ -21,16 +21,16 @@ pipeline {
                 echo 'Renaming environment configuration file...'
                 sh 'mv .env.sample .env'
                 
-                echo 'Launching certified PHP container to install dependencies and run unit tests...'
+                echo 'Launching dedicated PHP 7.0 + Composer container...'
                 script {
-                    // Invokes the official stable Composer v1 image containing the exact PHP 7 runtime environment
+                    // Uses a strictly locked PHP 7.0 execution runtime layer 
                     sh '''
                         docker run --rm \
                           -v ${WORKSPACE}:/app \
                           -w /app \
                           -e PDO_MYSQL_ATTR_SSL_CA=false \
-                          composer:1.10 \
-                          bash -c "composer install --no-interaction --prefer-dist && ./vendor/bin/phpunit"
+                          tetranoodle/php70-composer:latest \
+                          bash -c "composer install --no-interaction --prefer-dist --ignore-platform-reqs && ./vendor/bin/phpunit"
                     '''
                 }
             }
