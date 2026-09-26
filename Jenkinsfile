@@ -21,17 +21,15 @@ pipeline {
                 echo 'Renaming environment configuration file...'
                 sh 'mv .env.sample .env'
                 
-                echo 'Launching stable Ubuntu 20.04 container as current user...'
+                echo 'Launching stable Ubuntu 20.04 build container...'
                 script {
-                    // Running with explicit host user IDs to prevent root-owned folder lockouts completely
                     sh '''
                         docker run --rm \
-                          --user $(id -u):\$(id -g) \
                           -v ${WORKSPACE}:/app \
                           -w /app \
                           -e DEBIAN_FRONTEND=noninteractive \
                           ubuntu:20.04 \
-                          bash -c "apt-get update -qq && apt-get install -y -qq php-cli php-mysql php-xml php-mbstring php-zip unzip curl && curl -sS https://getcomposer.org -o /tmp/composer && chmod +x /tmp/composer && /tmp/composer install --no-interaction --prefer-dist --ignore-platform-reqs && ./vendor/bin/phpunit"
+                          bash -c "apt-get update -qq && apt-get install -y -qq php-cli php-mysql php-xml php-mbstring php-zip unzip curl && curl -sS https://getcomposer.org -o /usr/local/bin/composer && chmod +x /usr/local/bin/composer && composer install --no-interaction --prefer-dist --ignore-platform-reqs && ./vendor/bin/phpunit && chown -R 105:109 /app"
                     '''
                 }
             }
