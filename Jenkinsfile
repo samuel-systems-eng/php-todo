@@ -13,7 +13,7 @@ pipeline {
                 echo 'Renaming environment configuration file...'
                 sh 'mv .env.sample .env'
                 
-                echo 'Launching stable container with zero-download composer tracking...'
+                echo 'Launching stable container with database bootstrapping and test execution...'
                 script {
                     sh '''
                         # 1. Create a local temporary directory on the host server
@@ -23,7 +23,7 @@ pipeline {
                         docker run --rm --entrypoint cat composer:1 /usr/bin/composer > tmp_bin/composer
                         chmod +x tmp_bin/composer
                         
-                        # 3. CRITICAL FIXED STEP: Force-create the missing Laravel bootstrap compilation directories
+                        # 3. Force-create the missing Laravel bootstrap compilation directories
                         mkdir -p bootstrap/cache
                         chmod -R 777 bootstrap/cache
                         
@@ -34,7 +34,7 @@ pipeline {
                           -w /app \
                           -e DEBIAN_FRONTEND=noninteractive \
                           ubuntu:20.04 \
-                          bash -c "apt-get update -qq && apt-get install -y -qq php-cli php-mysql php-xml php-mbstring php-zip unzip && composer install --no-interaction --prefer-dist --ignore-platform-reqs && ./vendor/bin/phpunit && chown -R 105:109 /app"
+                          bash -c "apt-get update -qq && apt-get install -y -qq php-cli php-mysql php-xml php-mbstring php-zip unzip && composer install --no-interaction --prefer-dist --ignore-platform-reqs && php artisan key:generate && php artisan migrate --force && ./vendor/bin/phpunit && chown -R 105:109 /app"
                         
                         # 5. Clean up our temporary binary directory post-execution
                         rm -rf tmp_bin
@@ -44,3 +44,4 @@ pipeline {
         }
     }
 }
+
