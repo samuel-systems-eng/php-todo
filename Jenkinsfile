@@ -21,15 +21,15 @@ pipeline {
                 echo 'Renaming environment configuration file...'
                 sh 'mv .env.sample .env'
                 
-                echo 'Launching dedicated PHP 7.3 container to run dependencies and testing suites...'
+                echo 'Launching certified PHP 7.3 container to compile dependencies and execute tests...'
                 script {
-                    // Uses an official, highly optimized, non-deprecated PHP 7.3+Composer build image
+                    // FIXED: Targeting the precise open-access path format for Composer v1 on PHP 7.3
                     sh '''
                         docker run --rm \
                           -v ${WORKSPACE}:/app \
                           -w /app \
                           -e PDO_MYSQL_ATTR_SSL_CA=false \
-                          composer:1.10-php73 \
+                          composer/composer:1.10-php73 \
                           bash -c "composer install --no-interaction --prefer-dist --ignore-platform-reqs && ./vendor/bin/phpunit"
                     '''
                 }
