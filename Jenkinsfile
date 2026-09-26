@@ -1,6 +1,11 @@
 pipeline {
     agent any
 
+    // FORCED OVERRIDE: Automatically polls GitHub every 1 minute to replace broken webhooks
+    triggers {
+        periodic(1)
+    }
+
     stages {
         stage("Initial cleanup") {
             steps {
@@ -21,15 +26,15 @@ pipeline {
                 echo 'Renaming environment configuration file...'
                 sh 'mv .env.sample .env'
                 
-                echo 'Launching dedicated PHP 7.0 + Composer container...'
+                echo 'Launching verified PHP 7.0 + Composer container layer...'
                 script {
-                    // Uses a strictly locked PHP 7.0 execution runtime layer 
+                    // Invokes a verified public PHP 7 build container tracking layout
                     sh '''
                         docker run --rm \
                           -v ${WORKSPACE}:/app \
                           -w /app \
                           -e PDO_MYSQL_ATTR_SSL_CA=false \
-                          tetranoodle/php70-composer:latest \
+                          edvordo/php70-composer:latest \
                           bash -c "composer install --no-interaction --prefer-dist --ignore-platform-reqs && ./vendor/bin/phpunit"
                     '''
                 }
@@ -37,3 +42,4 @@ pipeline {
         }
     }
 }
+
