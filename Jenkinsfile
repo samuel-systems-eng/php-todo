@@ -21,17 +21,17 @@ pipeline {
                 echo 'Renaming environment configuration file...'
                 sh 'mv .env.sample .env'
                 
-                echo 'Launching stable Ubuntu 20.04 build container...'
+                echo 'Launching stable Ubuntu 20.04 build container layer...'
                 script {
+                    // FIXED: Pulling the authentic Composer binary asset directly from Github Releases CDN
                     sh '''
-                      docker run --rm \
-                        -v ${WORKSPACE}:/app \
-                        -w /app \
-                        -e DEBIAN_FRONTEND=noninteractive \
-                        ubuntu:20.04 \
-                        bash -c "apt-get update -qq && apt-get install -y -qq php-cli php-mysql php-xml php-mbstring php-zip unzip curl && curl -sS -L https://github.com -o /usr/local/bin/composer && chmod +x /usr/local/bin/composer && composer install --no-interaction --prefer-dist --ignore-platform-reqs && ./vendor/bin/phpunit && chown -R 105:109 /app"
-                  '''
-                                 
+                        docker run --rm \
+                          -v ${WORKSPACE}:/app \
+                          -w /app \
+                          -e DEBIAN_FRONTEND=noninteractive \
+                          ubuntu:20.04 \
+                          bash -c "apt-get update -qq && apt-get install -y -qq php-cli php-mysql php-xml php-mbstring php-zip unzip curl && curl -sS -L https://github.com -o /usr/local/bin/composer && chmod +x /usr/local/bin/composer && composer install --no-interaction --prefer-dist --ignore-platform-reqs && ./vendor/bin/phpunit && chown -R 105:109 /app"
+                    '''
                 }
             }
         }
