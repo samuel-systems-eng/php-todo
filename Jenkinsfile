@@ -21,16 +21,15 @@ pipeline {
                 echo 'Renaming environment configuration file...'
                 sh 'mv .env.sample .env'
                 
-                echo 'Launching certified public Composer 1.x container layer...'
+                echo 'Launching stable Ubuntu 20.04 container containing native PHP 7.4 runtime environment...'
                 script {
-                    // Invokes the official stable Composer v1 image architecture
                     sh '''
                         docker run --rm \
                           -v ${WORKSPACE}:/app \
                           -w /app \
-                          -e PDO_MYSQL_ATTR_SSL_CA=false \
-                          composer:1.10 \
-                          bash -c "composer install --no-interaction --prefer-dist --ignore-platform-reqs && ./vendor/bin/phpunit && chown -R $(id -u):\$(id -g) /app"
+                          -e DEBIAN_FRONTEND=noninteractive \
+                          ubuntu:20.04 \
+                          bash -c "apt-get update -qq && apt-get install -y -qq php-cli php-mysql php-xml php-mbzip php-zip unzip curl && curl -sS https://getcomposer.org -o /usr/local/bin/composer && chmod +x /usr/local/bin/composer && composer install --no-interaction --prefer-dist --ignore-platform-reqs && ./vendor/bin/phpunit && chown -R \$(id -u):\$(id -g) /app"
                     '''
                 }
             }
