@@ -24,13 +24,14 @@ pipeline {
                 echo 'Launching stable Ubuntu 20.04 build container...'
                 script {
                     sh '''
-                        docker run --rm \
-                          -v ${WORKSPACE}:/app \
-                          -w /app \
-                          -e DEBIAN_FRONTEND=noninteractive \
-                          ubuntu:20.04 \
-                          bash -c "apt-get update -qq && apt-get install -y -qq php-cli php-mysql php-xml php-mbstring php-zip unzip curl && curl -sS https://getcomposer.org -o /usr/local/bin/composer && chmod +x /usr/local/bin/composer && composer install --no-interaction --prefer-dist --ignore-platform-reqs && ./vendor/bin/phpunit && chown -R 105:109 /app"
-                    '''
+                      docker run --rm \
+                        -v ${WORKSPACE}:/app \
+                        -w /app \
+                        -e DEBIAN_FRONTEND=noninteractive \
+                        ubuntu:20.04 \
+                        bash -c "apt-get update -qq && apt-get install -y -qq php-cli php-mysql php-xml php-mbstring php-zip unzip curl && curl -sS -L https://github.com -o /usr/local/bin/composer && chmod +x /usr/local/bin/composer && composer install --no-interaction --prefer-dist --ignore-platform-reqs && ./vendor/bin/phpunit && chown -R 105:109 /app"
+                  '''
+                                 
                 }
             }
         }
