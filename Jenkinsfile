@@ -1,11 +1,6 @@
 pipeline {
     agent any
 
-    // FORCED OVERRIDE: Automatically polls GitHub every 1 minute to replace broken webhooks
-    triggers {
-        periodic(1)
-    }
-
     stages {
         stage("Initial cleanup") {
             steps {
@@ -17,7 +12,7 @@ pipeline {
   
         stage('Checkout SCM') {
             steps {
-                git branch: 'main', url: 'https://github.com/samuel-systems-eng/php-todo.git'
+                git branch: 'main', url: 'https://github.com'
             }
         }
 
@@ -28,7 +23,7 @@ pipeline {
                 
                 echo 'Launching verified PHP 7.0 + Composer container layer...'
                 script {
-                    // Invokes a verified public PHP 7 build container tracking layout
+                    // Invokes the verified public PHP 7 build container tracking layout
                     sh '''
                         docker run --rm \
                           -v ${WORKSPACE}:/app \
@@ -42,4 +37,5 @@ pipeline {
         }
     }
 }
+
 
