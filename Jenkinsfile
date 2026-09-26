@@ -21,16 +21,16 @@ pipeline {
                 echo 'Renaming environment configuration file...'
                 sh 'mv .env.sample .env'
                 
-                echo 'Launching official PHP 7.3 container layer...'
+                echo 'Launching pre-compiled native PHP 7.3 + Composer v1 workspace environment...'
                 script {
-                    // Pulls the guaranteed, open-access public core PHP 7.3 image
+                    // Invokes the official, self-contained Composer 1.x core image line
                     sh '''
                         docker run --rm \
                           -v ${WORKSPACE}:/app \
                           -w /app \
                           -e PDO_MYSQL_ATTR_SSL_CA=false \
-                          php:7.3-cli \
-                          bash -c "apt-get update -qq && apt-get install -y -qq unzip curl && curl -sS https://getcomposer.org | php -- --install-dir=/usr/local/bin --filename=composer && composer install --no-interaction --prefer-dist --ignore-platform-reqs && ./vendor/bin/phpunit"
+                          composer:1 \
+                          bash -c "composer install --no-interaction --prefer-dist --ignore-platform-reqs && ./vendor/bin/phpunit"
                     '''
                 }
             }
