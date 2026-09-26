@@ -21,10 +21,18 @@ pipeline {
                 echo 'Renaming environment configuration file...'
                 sh 'mv .env.sample .env'
                 
-                echo 'Executing lightweight native PHP installation and test suites...'
-                // Suppresses deprecation exceptions to allow seamless execution on the host engine
-                sh 'php -d error_reporting="E_ALL & ~E_DEPRECATED & ~E_NOTICE" /usr/bin/composer install --no-interaction --prefer-dist --ignore-platform-reqs'
-                sh 'php -d error_reporting="E_ALL & ~E_DEPRECATED & ~E_NOTICE" vendor/bin/phpunit'
+                echo 'Launching dedicated PHP 7.3 container to run dependencies and testing suites...'
+                script {
+                    // Uses an official, highly optimized, non-deprecated PHP 7.3+Composer build image
+                    sh '''
+                        docker run --rm \
+                          -v ${WORKSPACE}:/app \
+                          -w /app \
+                          -e PDO_MYSQL_ATTR_SSL_CA=false \
+                          composer:1.10-php73 \
+                          bash -c "composer install --no-interaction --prefer-dist --ignore-platform-reqs && ./vendor/bin/phpunit"
+                    '''
+                }
             }
         }
     }
