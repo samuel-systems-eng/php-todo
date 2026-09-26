@@ -23,7 +23,6 @@ pipeline {
                 
                 echo 'Launching stable Ubuntu 20.04 build container layer...'
                 script {
-                    // FIXED: Pulling the authentic Composer binary asset directly from Github Releases CDN
                     sh '''
                         docker run --rm \
                           -v ${WORKSPACE}:/app \
