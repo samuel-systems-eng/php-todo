@@ -16,21 +16,23 @@ pipeline {
             }
         }
 
-        stage('Prepare and Test Application inside Container') {
+        stage('Prepare and Test Application') {
             steps {
-                echo 'Renaming configuration profile...'
+                echo 'Renaming environment configuration file...'
                 sh 'mv .env.sample .env'
                 
-                echo 'Launching isolated PHP 7.0 workspace container to execute test matrices...'
-                // Spins up a clean, isolated PHP 7 environment to insulate scripts from host server components
-                sh '''
-                    docker run --rm \
-                      -v ${WORKSPACE}:/app \
-                      -w /app \
-                      -e PDO_MYSQL_ATTR_SSL_CA=false \
-                      textik/php70-composer:latest \
-                      bash -c "composer install --no-interaction --prefer-dist && ./vendor/bin/phpunit"
-                '''
+                echo 'Launching certified PHP container to install dependencies and run unit tests...'
+                script {
+                    // Invokes the official stable Composer v1 image containing the exact PHP 7 runtime environment
+                    sh '''
+                        docker run --rm \
+                          -v ${WORKSPACE}:/app \
+                          -w /app \
+                          -e PDO_MYSQL_ATTR_SSL_CA=false \
+                          composer:1.10 \
+                          bash -c "composer install --no-interaction --prefer-dist && ./vendor/bin/phpunit"
+                    '''
+                }
             }
         }
     }
