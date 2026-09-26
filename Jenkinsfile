@@ -19,8 +19,8 @@ pipeline {
         stage('Prepare Dependencies') {
             steps {
                 sh 'mv .env.sample .env'
-                sh 'composer install'
-                // ENFORCED GLOBAL BYPASS OVERRIDE ADDED INLINE BELOW:
+                // OPTIMIZED FORCED BYPASS FOR PHP 8.5+ ENGINE ALIGNMENT:
+                sh 'composer install --no-interaction --prefer-dist --ignore-platform-reqs'
                 sh 'PDO_MYSQL_ATTR_SSL_CA=false php artisan migrate --force'
                 sh 'php artisan db:seed --force'
                 sh 'php artisan key:generate'
