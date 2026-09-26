@@ -30,7 +30,7 @@ pipeline {
                           -w /app \
                           -e DEBIAN_FRONTEND=noninteractive \
                           ubuntu:20.04 \
-                          bash -c "apt-get update -qq && apt-get install -y -qq php-cli php-mysql php-xml php-mbstring php-zip unzip && mkdir -p bootstrap/cache && chmod -R 777 bootstrap/cache && composer install --no-interaction --prefer-dist --ignore-platform-reqs && php artisan key:generate && php artisan migrate --force && ./vendor/bin/phpunit && chown -R 105:109 /app"
+                          bash -c "apt-get update -qq && apt-get install -y -qq php-cli php-mysql php-xml php-mbstring php-zip unzip && mkdir -p bootstrap/cache storage/framework/sessions storage/framework/views storage/framework/testing && chmod -R 777 bootstrap/cache storage && composer install --no-interaction --prefer-dist --ignore-platform-reqs && php artisan key:generate && php artisan migrate --force && ./vendor/bin/phpunit && chown -R 105:109 /app"
                         
                         # 4. Clean up our temporary binary directory post-execution
                         rm -rf tmp_bin
