@@ -23,7 +23,11 @@ pipeline {
                         docker run --rm --entrypoint cat composer:1 /usr/bin/composer > tmp_bin/composer
                         chmod +x tmp_bin/composer
                         
-                        # 3. Mount both the code and our local composer binary safely inside the container
+                        # 3. CRITICAL FIXED STEP: Force-create the missing Laravel bootstrap compilation directories
+                        mkdir -p bootstrap/cache
+                        chmod -R 777 bootstrap/cache
+                        
+                        # 4. Mount both the code and our local composer binary safely inside the container
                         docker run --rm \
                           -v ${WORKSPACE}:/app \
                           -v ${WORKSPACE}/tmp_bin/composer:/usr/local/bin/composer \
@@ -32,7 +36,7 @@ pipeline {
                           ubuntu:20.04 \
                           bash -c "apt-get update -qq && apt-get install -y -qq php-cli php-mysql php-xml php-mbstring php-zip unzip && composer install --no-interaction --prefer-dist --ignore-platform-reqs && ./vendor/bin/phpunit && chown -R 105:109 /app"
                         
-                        # 4. Clean up our temporary binary directory post-execution
+                        # 5. Clean up our temporary binary directory post-execution
                         rm -rf tmp_bin
                     '''
                 }
