@@ -21,16 +21,16 @@ pipeline {
                 echo 'Renaming environment configuration file...'
                 sh 'mv .env.sample .env'
                 
-                echo 'Launching certified PHP 7.3 container to compile dependencies and execute tests...'
+                echo 'Launching official PHP 7.3 container layer...'
                 script {
-                    // FIXED: Targeting the precise open-access path format for Composer v1 on PHP 7.3
+                    // Pulls the guaranteed, open-access public core PHP 7.3 image
                     sh '''
                         docker run --rm \
                           -v ${WORKSPACE}:/app \
                           -w /app \
                           -e PDO_MYSQL_ATTR_SSL_CA=false \
-                          composer/composer:1.10-php73 \
-                          bash -c "composer install --no-interaction --prefer-dist --ignore-platform-reqs && ./vendor/bin/phpunit"
+                          php:7.3-cli \
+                          bash -c "apt-get update -qq && apt-get install -y -qq unzip curl && curl -sS https://getcomposer.org | php -- --install-dir=/usr/local/bin --filename=composer && composer install --no-interaction --prefer-dist --ignore-platform-reqs && ./vendor/bin/phpunit"
                     '''
                 }
             }
