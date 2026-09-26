@@ -12,24 +12,25 @@ pipeline {
   
         stage('Checkout SCM') {
             steps {
-                // Tracking your clean personal application repo branch target
                 git branch: 'main', url: 'https://github.com/samuel-systems-eng/php-todo.git'
             }
         }
-        stage('Prepare Dependencies') {
-            steps {
-                sh 'mv .env.sample .env'
-                // OPTIMIZED FORCED BYPASS FOR PHP 8.5+ ENGINE ALIGNMENT:
-                sh 'composer install --no-interaction --prefer-dist --ignore-platform-reqs'
-                sh 'PDO_MYSQL_ATTR_SSL_CA=false php artisan migrate --force'
-                sh 'php artisan db:seed --force'
-                sh 'php artisan key:generate'
-            }
-        }
 
-        stage('Execute Unit Tests') {
+        stage('Prepare and Test Application inside Container') {
             steps {
-                sh './vendor/bin/phpunit'
+                echo 'Renaming configuration profile...'
+                sh 'mv .env.sample .env'
+                
+                echo 'Launching isolated PHP 7.0 workspace container to execute test matrices...'
+                // Spins up a clean, isolated PHP 7 environment to insulate scripts from host server components
+                sh '''
+                    docker run --rm \
+                      -v ${WORKSPACE}:/app \
+                      -w /app \
+                      -e PDO_MYSQL_ATTR_SSL_CA=false \
+                      textik/php70-composer:latest \
+                      bash -c "composer install --no-interaction --prefer-dist && ./vendor/bin/phpunit"
+                '''
             }
         }
     }
