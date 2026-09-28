@@ -10,7 +10,6 @@ pipeline {
     stages {
         stage('Checkout SCM') {
             steps {
-                // FIXED: Restored complete personal fork repository URL path parameters
                 git branch: 'main', url: 'https://github.com/samuel-systems-eng/php-todo.git'
             }
         }
@@ -66,39 +65,38 @@ pipeline {
             }
         }
 
-        // TEMPORARILY DISABLED: Skips packaging until charts are verified
-        // stage('Package Artifact') {
-        //     steps {
-        //         echo 'Compressing verified build files into deployable production archive...'
-        //         sh 'tar --exclude=".git" -czf php-todo.tar.gz .'
-        //     }
-        // }
+        stage('Package Artifact') {
+            steps {
+                echo 'Compressing verified build files into deployable production archive...'
+                // Excludes local git tracking databases to keep the package clean
+                sh 'tar --exclude=".git" -czf php-todo.tar.gz .'
+            }
+        }
 
-        // TEMPORARILY DISABLED: Skips Artifactory uploads until charts are verified
-        // stage('Upload Artifact to Artifactory') {
-        //     steps {
-        //         echo 'Shipping verified archive package asset straight to Artifactory locker...'
-        //         script { 
-        //             def server = Artifactory.server "${env.JFROG_SERVER}"                 
-        //             def uploadSpec = """{
-        //                 "files": [
-        //                   {
-        //                     "pattern": "php-todo.tar.gz",
-        //                     "target": "${env.ARTIFACTORY_REPO}/"
-        //                   }
-        //                 ]
-        //             }""" 
-        //             server.upload spec: uploadSpec
-        //         }
-        //     }
-        // }
+        stage('Upload Artifact to Artifactory') {
+            steps {
+                echo 'Shipping verified archive package asset straight to Artifactory locker...'
+                script { 
+                    def server = Artifactory.server "${env.JFROG_SERVER}"                 
+                    def uploadSpec = """{
+                        "files": [
+                          {
+                            "pattern": "php-todo.tar.gz",
+                            "target": "${env.ARTIFACTORY_REPO}/"
+                          }
+                        ]
+                    }""" 
+                    server.upload spec: uploadSpec
+                }
+            }
+        }
 
-        // TEMPORARILY DISABLED: Skips downstream deployment
-        // stage('Deploy to Dev Environment') {
-        //     steps {
-        //         echo 'Triggering downstream Ansible configuration lifecycle deployment...'
-        //         build job: 'ansible-project/main', parameters: [[$class: 'StringParameterValue', name: 'env', value: 'dev']], propagate: false, wait: true
-        //     }
-        // }
+        stage('Deploy to Dev Environment') {
+            steps {
+                echo 'Triggering downstream Ansible configuration lifecycle deployment...'
+                // Launches your separate infrastructure playbook automation project branch
+                build job: 'ansible-project/main', parameters: [[$class: 'StringParameterValue', name: 'env', value: 'dev']], propagate: false, wait: true
+            }
+        }
     }
 }
