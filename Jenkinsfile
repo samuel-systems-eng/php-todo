@@ -68,7 +68,6 @@ pipeline {
         stage('Package Artifact') {
             steps {
                 echo 'Compressing verified build files into deployable production archive...'
-                // Excludes local git tracking databases to keep the package clean
                 sh 'tar --exclude=".git" -czf php-todo.tar.gz .'
             }
         }
@@ -93,9 +92,9 @@ pipeline {
 
         stage('Deploy to Dev Environment') {
             steps {
-                echo 'Triggering downstream Ansible configuration lifecycle deployment on active branch...'
-                // FIXED: Directing the pipeline engine to call your precise multi-branch feature track
-                build job: 'ansible_config_mgt/feature/todo-application', parameters: [[$class: 'StringParameterValue', name: 'env', value: 'dev']], propagate: false, wait: true
+                echo 'Triggering downstream Ansible configuration lifecycle deployment...'
+                // FIXED: Directing the pipeline to the exact, verified path found in your URL parameters
+                build job: 'Multibranch pipeline/feature%2Ftodo-application', parameters: [[$class: 'StringParameterValue', name: 'env', value: 'dev']], propagate: false, wait: true
             }
         }
     }
