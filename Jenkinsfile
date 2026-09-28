@@ -28,9 +28,9 @@ pipeline {
             }
         }
 
-        stage('Compile and Audit Codebase') {
+        stage('Compile, Audit, and Test Application') {
             steps {
-                echo 'Launching container to execute framework installation and source code metrics scans...'
+                echo 'Launching stable container to execute framework metrics audits and unit tests...'
                 script {
                     sh '''
                         docker run --rm \
@@ -39,22 +39,7 @@ pipeline {
                           -w /app \
                           -e DEBIAN_FRONTEND=noninteractive \
                           ubuntu:20.04 \
-                          bash -c "apt-get update -qq && apt-get install -y -qq php-cli php-mysql php-xml php-mbstring php-zip unzip && /usr/local/bin/composer install --no-interaction --prefer-dist --ignore-platform-reqs && php artisan key:generate && php artisan migrate --force && echo '=== CODEBASE LAYOUT STRUCTURE METRICS ===' && echo 'Total PHP Files Analyzed:' && find app tests -name '*.php' | wc -l && echo 'Total Code Lines Evaluated:' && find app tests -name '*.php' | xargs wc -l && chown -R 105:109 /app"
-                    '''
-                }
-            }
-        }
-
-        stage('Execute Unit Tests') {
-            steps {
-                echo 'Invoking dedicated PHPUnit testing matrices...'
-                script {
-                    sh '''
-                        docker run --rm \
-                          -v ${WORKSPACE}:/app \
-                          -w /app \
-                          ubuntu:20.04 \
-                          bash -c "./vendor/bin/phpunit"
+                          bash -c "apt-get update -qq && apt-get install -y -qq php-cli php-mysql php-xml php-mbstring php-zip unzip && /usr/local/bin/composer install --no-interaction --prefer-dist --ignore-platform-reqs && php artisan key:generate && php artisan migrate --force && echo '=== CODEBASE LAYOUT STRUCTURE METRICS ===' && find app tests -name '*.php' | wc -l && find app tests -name '*.php' | xargs wc -l && echo '=== EXECUTING PHPUNIT UNIT TESTING MATRIX ===' && ./vendor/bin/phpunit && chown -R 105:109 /app"
                     '''
                 }
             }
