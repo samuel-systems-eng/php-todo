@@ -35,10 +35,11 @@ pipeline {
                     sh '''
                         docker run --rm \
                           -v ${WORKSPACE}:/app \
+                          -v ${WORKSPACE}/tmp_bin/composer:/usr/local/bin/composer \
                           -w /app \
                           -e DEBIAN_FRONTEND=noninteractive \
                           ubuntu:20.04 \
-                          bash -c "apt-get update -qq && apt-get install -y -qq php-cli php-mysql php-xml php-mbstring php-zip unzip && composer install --no-interaction --prefer-dist --ignore-platform-reqs && composer require nunomaduro/phpinsights:v1.14.0 --dev --no-interaction --ignore-platform-reqs && php artisan key:generate && php artisan migrate --force && echo '=== RUNNING PHP INSIGHTS CODE METRICS ===' && ./vendor/bin/phpinsights analyse --no-interaction && chown -R 105:109 /app"
+                          bash -c "apt-get update -qq && apt-get install -y -qq php-cli php-mysql php-xml php-mbstring php-zip unzip && /usr/local/bin/composer install --no-interaction --prefer-dist --ignore-platform-reqs && /usr/local/bin/composer require nunomaduro/phpinsights:v1.14.0 --dev --no-interaction --ignore-platform-reqs && php artisan key:generate && php artisan migrate --force && echo '=== RUNNING PHP INSIGHTS CODE METRICS ===' && ./vendor/bin/phpinsights analyse --no-interaction && chown -R 105:109 /app"
                     '''
                 }
             }
@@ -60,4 +61,3 @@ pipeline {
         }
     }
 }
-
