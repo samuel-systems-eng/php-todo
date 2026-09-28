@@ -95,7 +95,7 @@ pipeline {
             steps {
                 echo 'Triggering downstream Ansible configuration lifecycle deployment...'
                 // FIXED: Directing the pipeline engine to call your precise multi-branch feature track
-                build job: 'ansible-project/feature/todo-application', parameters: [[$class: 'StringParameterValue', name: 'env', value: 'dev']], propagate: false, wait: true
+                build job: 'ansible_config_mgt/feature/todo-application', parameters: [[$class: 'StringParameterValue', name: 'env', value: 'dev']], propagate: false, wait: true
             }
         }
     }
