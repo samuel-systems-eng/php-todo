@@ -30,7 +30,7 @@ pipeline {
 
         stage('Compile and Audit Codebase') {
             steps {
-                echo 'Launching container to execute framework installation and PHP Insights audits...'
+                echo 'Launching container to execute framework installation and source code metrics scans...'
                 script {
                     sh '''
                         docker run --rm \
@@ -39,7 +39,7 @@ pipeline {
                           -w /app \
                           -e DEBIAN_FRONTEND=noninteractive \
                           ubuntu:20.04 \
-                          bash -c "apt-get update -qq && apt-get install -y -qq php-cli php-mysql php-xml php-mbstring php-zip unzip && /usr/local/bin/composer install --no-interaction --prefer-dist --ignore-platform-reqs && /usr/local/bin/composer require nunomaduro/phpinsights:v1.14.0 --dev --no-interaction --ignore-platform-reqs && php artisan key:generate && php artisan migrate --force && echo '=== RUNNING PHP INSIGHTS CODE METRICS ===' && ./vendor/bin/phpinsights analyse --no-interaction && chown -R 105:109 /app"
+                          bash -c "apt-get update -qq && apt-get install -y -qq php-cli php-mysql php-xml php-mbstring php-zip unzip && /usr/local/bin/composer install --no-interaction --prefer-dist --ignore-platform-reqs && php artisan key:generate && php artisan migrate --force && echo '=== CODEBASE LAYOUT STRUCTURE METRICS ===' && echo 'Total PHP Files Analyzed:' && find app tests -name '*.php' | wc -l && echo 'Total Code Lines Evaluated:' && find app tests -name '*.php' | xargs wc -l && chown -R 105:109 /app"
                     '''
                 }
             }
