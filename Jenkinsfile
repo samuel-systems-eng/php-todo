@@ -94,8 +94,8 @@ pipeline {
         stage('Deploy to Dev Environment') {
             steps {
                 echo 'Triggering downstream Ansible configuration lifecycle deployment...'
-                // Launches your separate infrastructure playbook automation project branch
-                build job: 'ansible-project/main', parameters: [[$class: 'StringParameterValue', name: 'env', value: 'dev']], propagate: false, wait: true
+                // FIXED: Directing the pipeline engine to call your precise multi-branch feature track
+                build job: 'ansible-project/feature%2Ftodo-application', parameters: [[$class: 'StringParameterValue', name: 'env', value: 'dev']], propagate: false, wait: true
             }
         }
     }
