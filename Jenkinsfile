@@ -28,10 +28,11 @@ pipeline {
             }
         }
 
-        stage('Compile and Audit Codebase') {
+        stage('Compile, Audit, and Test Application') {
             steps {
-                echo 'Launching stable container to execute framework installation and codebase metrics...'
+                echo 'Launching stable container to execute framework metrics audits and unit tests...'
                 script {
+                    // Executes everything inside a single container environment to maintain the PHP 7.4 runtime path variables
                     sh '''
                         docker run --rm \
                           -v ${WORKSPACE}:/app \
@@ -39,38 +40,26 @@ pipeline {
                           -w /app \
                           -e DEBIAN_FRONTEND=noninteractive \
                           ubuntu:20.04 \
-                          bash -c "apt-get update -qq && apt-get install -y -qq php-cli php-mysql php-xml php-mbstring php-zip unzip && /usr/local/bin/composer install --no-interaction --prefer-dist --ignore-platform-reqs && php artisan key:generate && php artisan migrate --force && mkdir -p build/logs && echo 'Lines of Code (LOC),Directories,Files' > build/logs/phploc.csv && echo \\$(find app -type f -name '*.php' | xargs cat | wc -l),\\$(find app -type d | wc -l),\\$(find app -type f -name '*.php' | wc -l) >> build/logs/phploc.csv && echo 'Y_AXIS_FILES='\\$(find app -name '*.php' | wc -l) > plot.properties && echo 'Y_AXIS_LINES='\\$(find app -name '*.php' | xargs cat | wc -l) >> plot.properties && chown -R 105:109 /app"
+                          bash -c "apt-get update -qq && apt-get install -y -qq php-cli php-mysql php-xml php-mbstring php-zip unzip && /usr/local/bin/composer install --no-interaction --prefer-dist --ignore-platform-reqs && php artisan key:generate && php artisan migrate --force && mkdir -p build/logs && echo 'Lines of Code (LOC),Directories,Files' > build/logs/phploc.csv && echo \\$(find app -type f -name '*.php' | xargs cat | wc -l),\\$(find app -type d | wc -l),\\$(find app -type f -name '*.php' | wc -l) >> build/logs/phploc.csv && echo 'Y_AXIS_FILES='\\$(find app -name '*.php' | wc -l) > plot.properties && echo 'Y_AXIS_LINES='\\$(find app -name '*.php' | xargs cat | wc -l) >> plot.properties && echo '=== EXECUTING PHPUNIT UNIT TESTING MATRIX ===' && ./vendor/bin/phpunit && chown -R 105:109 /app"
+                        
+                        # Clean up temporary binary directories on host disk
+                        rm -rf tmp_bin
                     '''
                 }
             }
         }
 
-        stage('Code Analysis') {
+        stage('Generate Trend Plots') {
             steps {
                 echo 'Executing Plot Plugin Trend Analysis over generated code properties...'
                 script {
-                    // Invokes the Plot Plugin natively in the Jenkins engine to parse data and draw trends
+                    // FIXED: Corrected parameter key names to parse data parameters into the Jenkins UI dashboard
                     plot csvFileName: 'plot-code-metrics.csv', 
                          group: 'Code Quality Metrics', 
                          title: 'Lines of Code vs Total Files Trend', 
                          style: 'line', 
-                         propertiesSeries: [[file: 'plot.properties', label: 'Total Files Analyzed', node: 'Y_AXIS_FILES'], 
-                                            [file: 'plot.properties', label: 'Total Lines of Code', node: 'Y_AXIS_LINES']]
-                }
-            }
-        }
-
-        stage('Execute Unit Tests') {
-            steps {
-                echo 'Invoking dedicated PHPUnit testing matrices...'
-                script {
-                    sh '''
-                        docker run --rm \
-                          -v ${WORKSPACE}:/app \
-                          -w /app \
-                          ubuntu:20.04 \
-                          bash -c "./vendor/bin/phpunit"
-                    '''
+                         propertiesSeries: [[file: 'plot.properties', label: 'Total Files Analyzed', key: 'Y_AXIS_FILES'], 
+                                            [file: 'plot.properties', label: 'Total Lines of Code', key: 'Y_AXIS_LINES']]
                 }
             }
         }
