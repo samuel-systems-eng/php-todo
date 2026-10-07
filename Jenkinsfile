@@ -1,4 +1,5 @@
 node {
+    // Dynamically tracking versions using Jenkins build numbers
     def appVersion = "1.0.${BUILD_NUMBER}"
     
     stage('Checkout SCM') {
@@ -7,10 +8,6 @@ node {
     }
 
     stage('Execute Genuine Unit Tests & Coverage') {
-        // HARDENED SELF-CONTAINED FIX:
-        // 1. Installs persistent build tools ($PHPIZE_DEPS) and native database development headers (mariadb-dev)
-        // 2. Compiles pdo_mysql and pcov coverage engines natively within the container space
-        // 3. Executes PHPUnit to output real clover.xml coverage matrices flawlessly
         sh """
             mkdir -p build/logs bootstrap/cache storage/framework/sessions storage/framework/views storage/framework/testing
             chmod -R 775 bootstrap/cache storage
@@ -29,13 +26,19 @@ node {
     }
 
     stage('Package Neutral Artifact') {
-        sh "tar --exclude='.git' --exclude='.env' --exclude='tests' -czf php-todo-\${appVersion}.tar.gz ."
+        // SECURE FIXED ARCHIVE LOGIC: Saving the archive file safely ONE DIRECTORY LEVEL UP (../) 
+        // to prevent tar from reading its own growing file structure inside the workspace loop.
+        sh "tar --exclude='.git' --exclude='.env' --exclude='tests' -czf ../php-todo-${appVersion}.tar.gz ."
     }
 
     stage('Publish Versioned Build to JFrog Locker') {
         withCredentials([usernamePassword(credentialsId: 'ARTIFACTORY_CREDS', usernameVariable: 'JF_USER', passwordVariable: 'JF_PASS')]) {
-            echo "Uploading immutable build artifact [\${appVersion}] to centralized repository storage..."
-            sh "curl -u \${JF_USER}:\${JF_PASS} -T php-todo-\${appVersion}.tar.gz 'http://34.227.205.86:8082/artifactory/generic-local-repo/php-todo-${appVersion}.tar.gz'"
+            echo "Uploading immutable build artifact [${appVersion}] to centralized repository storage..."
+            // Securely streaming the target artifact archive package down from the upper parent folder track
+            sh "curl -u ${JF_USER}:${JF_PASS} -T ../php-todo-${appVersion}.tar.gz 'http://34.227.205.86:8082/artifactory/generic-local-repo/php-todo-${appVersion}.tar.gz'"
+            
+            // Clean up the temporary workspace archive file from the master server disk space
+            sh "rm -f ../php-todo-${appVersion}.tar.gz"
         }
     }
 
