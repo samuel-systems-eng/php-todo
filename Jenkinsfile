@@ -2,36 +2,30 @@ pipeline {
     agent any
 
     stages {
-        stage("Initial cleanup") {
-            steps {
-                dir("${WORKSPACE}") {
-                    deleteDir()
-                }
-            }
-        }
-  
         stage('Checkout SCM') {
             steps {
-                git branch: 'main', url: 'https://github.com/samuel-systems-eng/php-todo.git'
+                checkout scm
             }
         }
 
-        stage('Prepare and Test Application') {
+        stage('Compile, Audit, and Test Application') {
             steps {
-                echo 'Renaming environment configuration file...'
-                sh 'mv .env.sample .env'
-                
-                echo 'Launching stable Ubuntu 20.04 build container layer...'
-                script {
-                    sh '''
-                        docker run --rm \
-                          -v ${WORKSPACE}:/app \
-                          -w /app \
-                          -e DEBIAN_FRONTEND=noninteractive \
-                          ubuntu:20.04 \
-                          bash -c "apt-get update -qq && apt-get install -y -qq php-cli php-mysql php-xml php-mbstring php-zip unzip curl && curl -sS -L https://github.com -o /usr/local/bin/composer && chmod +x /usr/local/bin/composer && composer install --no-interaction --prefer-dist --ignore-platform-reqs && ./vendor/bin/phpunit && chown -R 105:109 /app"
-                    '''
-                }
+                echo '=== EXECUTING ENFORCED TESTING ENGINE ==='
+                // 🚨 INTENTIONAL FAILURE INJECTION: Forces a non-zero exit code to simulate a failed unit test suite
+                sh "exit 1"
+            }
+        }
+
+        stage('Package Artifact') {
+            steps {
+                echo 'This stage will be skipped upon test failure.'
+            }
+        }
+        
+        stage('Deploy to Dev Environment') {
+            steps {
+                // 🚨 CRITICAL FIX: Changed propagate to true so downstream issues fail the parent build visibly
+                build job: 'ansible-webserver-deployment', propagate: true, wait: true
             }
         }
     }
