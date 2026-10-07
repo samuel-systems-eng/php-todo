@@ -2,13 +2,13 @@ node {
     def appVersion = "1.0.${BUILD_NUMBER}"
     
     stage('Checkout SCM') {
-        // FIXED USER EXCEPTION: Using ubuntu:ubuntu to match the slave node's native architecture accounts
-        sh "sudo chown -R ubuntu:ubuntu \${WORKSPACE} && sudo chmod -R 755 \${WORKSPACE}"
+        // Master Environment Alignment: Mapping file permissions back to the local jenkins execution daemon account
+        sh "sudo chown -R jenkins:jenkins \${WORKSPACE} && sudo chmod -R 755 \${WORKSPACE}"
         checkout scm
     }
 
     stage('Execute Genuine Unit Tests & Coverage') {
-        // FIXED LEGACY ENVIRONMENT CONSTRAINT: Launching an isolated container wrapper to execute testing frameworks safely
+        // Legay Isolation Loop: Runs your PHP 7.4 unit tests within a container perfectly on the Master disk
         sh """
             mkdir -p build/logs bootstrap/cache storage/framework/sessions storage/framework/views storage/framework/testing
             sudo chmod -R 775 bootstrap/cache storage
@@ -39,6 +39,7 @@ node {
     }
 
     stage('Package Neutral Artifact') {
+        // SECURE CORRECTION: Building an environment-neutral artifact by explicitly excluding .env files
         sh "tar --exclude='.git' --exclude='.env' --exclude='tests' -czf php-todo-\${appVersion}.tar.gz ."
     }
 
@@ -50,6 +51,7 @@ node {
     }
 
     stage('Trigger Downstream Infrastructure Deployment') {
+        // propagate: true guarantees that any downstream deployment issues will visibly fail this parent pipeline
         build job: 'ansible-webserver-deployment', 
               parameters: [string(name: 'ARTIFACT_VERSION', value: appVersion)], 
               wait: true, 
