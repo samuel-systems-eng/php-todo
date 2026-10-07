@@ -2,13 +2,13 @@ node {
     def appVersion = "1.0.${BUILD_NUMBER}"
     
     stage('Checkout SCM') {
-        // SECURE SYSTEM ALIGNMENT: Enforces standard 755 directory masks using the native running jenkins process permissions without sudo
+        // Enforces standard permissions using native jenkins user control
         sh "chown -R jenkins:jenkins \${WORKSPACE} && chmod -R 755 \${WORKSPACE}"
         checkout scm
     }
 
     stage('Execute Genuine Unit Tests & Coverage') {
-        // Legacy Isolation Loop: Runs your PHP 7.4 unit tests within a container perfectly on the Master disk
+        // Removed the corepack dependency to call the local vendor PHPUnit binary directly
         sh """
             mkdir -p build/logs bootstrap/cache storage/framework/sessions storage/framework/views storage/framework/testing
             chmod -R 775 bootstrap/cache storage
@@ -17,7 +17,7 @@ node {
               -v \${WORKSPACE}:/app \
               -w /app \
               php:7.4-cli-alpine \
-              sh -c "apk add --no-cache bash && corepack enable && ./vendor/bin/phpunit --coverage-clover build/logs/clover.xml --log-junit build/logs/junit.xml"
+              sh -c "apk add --no-cache bash && ./vendor/bin/phpunit --version && ./vendor/bin/phpunit --coverage-clover build/logs/clover.xml --log-junit build/logs/junit.xml"
         """
     }
 
@@ -39,7 +39,7 @@ node {
     }
 
     stage('Package Neutral Artifact') {
-        // SECURE CORRECTION: Building an environment-neutral artifact by explicitly excluding .env files
+        // Excludes configuration variables (.env) to build a stateless production package
         sh "tar --exclude='.git' --exclude='.env' --exclude='tests' -czf php-todo-\${appVersion}.tar.gz ."
     }
 
@@ -51,7 +51,7 @@ node {
     }
 
     stage('Trigger Downstream Infrastructure Deployment') {
-        // propagate: true guarantees that any downstream deployment issues will visibly fail this parent pipeline
+        // propagate: true ensures downstream execution blocks bubble failures up transparently
         build job: 'ansible-webserver-deployment', 
               parameters: [string(name: 'ARTIFACT_VERSION', value: appVersion)], 
               wait: true, 
