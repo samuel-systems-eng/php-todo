@@ -1,17 +1,12 @@
 node {
+    // Unique version tracking based on active Jenkins execution build increments
     def appVersion = "1.0.${BUILD_NUMBER}"
     
     stage('Checkout SCM') {
-        // SECURE FIXED RUNTIME LOGIC: Stripped out the blocking chown step entirely. 
-        // Jenkins natively manages its own workspace workspace folder structures during checkout.
         checkout scm
     }
 
     stage('Execute Genuine Unit Tests & Coverage') {
-        // HARDENED ISOLATION LAYER:
-        // 1. Cleans up any root-owned temporary files safely INSIDE a short-lived root container.
-        // 2. Compiles pdo_mysql and pcov coverage engines natively within the container space.
-        // 3. Executes PHPUnit to output real clover.xml coverage matrices flawlessly.
         sh """
             mkdir -p build/logs bootstrap/cache storage/framework/sessions storage/framework/views storage/framework/testing
             chmod -R 775 bootstrap/cache storage
@@ -30,7 +25,6 @@ node {
     }
 
     stage('Package Neutral Artifact') {
-        // Storing the archive file safely ONE DIRECTORY LEVEL UP (../) to prevent tar from reading its own growing file structure inside the workspace loop.
         sh "tar --exclude='.git' --exclude='.env' --exclude='tests' -czf ../php-todo-${appVersion}.tar.gz ."
     }
 
@@ -43,7 +37,8 @@ node {
     }
 
     stage('Trigger Downstream Infrastructure Deployment') {
-        build job: 'ansible-webserver-deployment', 
+        // 🚨 TARGETED ALIGNMENT FIX: Directing Jenkins to the exact branch location inside the Multibranch project folder layout
+        build job: 'Multibranch pipeline/develop', 
               parameters: [string(name: 'ARTIFACT_VERSION', value: appVersion)], 
               wait: true, 
               propagate: true
