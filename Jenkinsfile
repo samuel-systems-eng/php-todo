@@ -2,16 +2,16 @@ node {
     def appVersion = "1.0.${BUILD_NUMBER}"
     
     stage('Checkout SCM') {
-        // Master Environment Alignment: Mapping file permissions back to the local jenkins execution daemon account
-        sh "sudo chown -R jenkins:jenkins \${WORKSPACE} && sudo chmod -R 755 \${WORKSPACE}"
+        // SECURE SYSTEM ALIGNMENT: Enforces standard 755 directory masks using the native running jenkins process permissions without sudo
+        sh "chown -R jenkins:jenkins \${WORKSPACE} && chmod -R 755 \${WORKSPACE}"
         checkout scm
     }
 
     stage('Execute Genuine Unit Tests & Coverage') {
-        // Legay Isolation Loop: Runs your PHP 7.4 unit tests within a container perfectly on the Master disk
+        // Legacy Isolation Loop: Runs your PHP 7.4 unit tests within a container perfectly on the Master disk
         sh """
             mkdir -p build/logs bootstrap/cache storage/framework/sessions storage/framework/views storage/framework/testing
-            sudo chmod -R 775 bootstrap/cache storage
+            chmod -R 775 bootstrap/cache storage
             
             docker run --rm \
               -v \${WORKSPACE}:/app \
