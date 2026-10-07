@@ -2,21 +2,20 @@ node {
     def appVersion = "1.0.${BUILD_NUMBER}"
     
     stage('Checkout SCM') {
-        // Enforces standard permissions using native master node user controls
         sh "chown -R jenkins:jenkins \${WORKSPACE} && chmod -R 755 \${WORKSPACE}"
         checkout scm
     }
 
     stage('Execute Genuine Unit Tests & Coverage') {
-        // HARDENED IMPLEMENTATION: 
-        // 1. Installs persistent extensions installer utility (install-php-extensions)
-        // 2. Injects native pdo_mysql database drivers to satisfy Laravel connection abstractions
-        // 3. Spins up a lightning-fast pcov coverage engine to generate real clover.xml matrices
+        // HARDENED SELF-CONTAINED FIX:
+        // 1. Installs persistent build tools ($PHPIZE_DEPS) and native database development headers (mariadb-dev)
+        // 2. Compiles pdo_mysql and pcov coverage engines natively within the container space
+        // 3. Executes PHPUnit to output real clover.xml coverage matrices flawlessly
         sh """
             mkdir -p build/logs bootstrap/cache storage/framework/sessions storage/framework/views storage/framework/testing
             chmod -R 775 bootstrap/cache storage
             
-            docker run --rm -v \${WORKSPACE}:/app -w /app php:7.4-cli-alpine sh -c "apk add --no-cache bash curl && wget -q https://github.com -O /usr/local/bin/install-php-extensions && chmod +x /usr/local/bin/install-php-extensions && install-php-extensions pdo_mysql pcov && ./vendor/bin/phpunit --coverage-clover build/logs/clover.xml --log-junit build/logs/junit.xml"
+            docker run --rm -v \${WORKSPACE}:/app -w /app php:7.4-cli-alpine sh -c "apk add --no-cache bash mariadb-dev bzip2-dev autoconf g++ make && docker-php-ext-install pdo_mysql && pecl install pcov && docker-php-ext-enable pcov && ./vendor/bin/phpunit --coverage-clover build/logs/clover.xml --log-junit build/logs/junit.xml"
         """
     }
 
@@ -30,7 +29,6 @@ node {
     }
 
     stage('Package Neutral Artifact') {
-        // SECURE CORRECTION: Explicitly excludes all cleartext secrets (.env) to protect credentials
         sh "tar --exclude='.git' --exclude='.env' --exclude='tests' -czf php-todo-\${appVersion}.tar.gz ."
     }
 
@@ -42,7 +40,6 @@ node {
     }
 
     stage('Trigger Downstream Infrastructure Deployment') {
-        // propagate: true guarantees full pipeline transparency upon deployment failures
         build job: 'ansible-webserver-deployment', 
               parameters: [string(name: 'ARTIFACT_VERSION', value: appVersion)], 
               wait: true, 
