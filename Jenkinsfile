@@ -20,7 +20,7 @@ node {
         withCredentials([string(credentialsId: 'SONAR_TOKEN', variable: 'SECURE_TOKEN')]) {
             def scannerHome = tool 'SonarQubeScanner'
             withSonarQubeEnv('sonarqube') {
-                sh "${scannerHome}/bin/sonar-scanner -Dsonar.projectKey=php-todo -Dsonar.projectName=php-todo -Dsonar.host.url=http://50.19.60.165:9000 -Dsonar.login=${SECURE_TOKEN} -Dsonar.sources=. -Dsonar.exclusions=**/vendor/**,**/tests/** -Dsonar.php.coverage.reportPaths=build/logs/clover.xml -Dsonar.php.tests.reportPath=build/logs/junit.xml"
+                sh "${scannerHome}/bin/sonar-scanner -Dsonar.projectKey=php-todo -Dsonar.projectName=php-todo -Dsonar.host.url=http://98.93.73.199:9000 -Dsonar.login=${SECURE_TOKEN} -Dsonar.sources=. -Dsonar.exclusions=**/vendor/**,**/tests/** -Dsonar.php.coverage.reportPaths=build/logs/clover.xml -Dsonar.php.tests.reportPath=build/logs/junit.xml"
             }
         }
     }
@@ -33,7 +33,7 @@ node {
     stage('Publish Versioned Build to JFrog Locker') {
         withCredentials([usernamePassword(credentialsId: 'ARTIFACTORY_CREDS', usernameVariable: 'JF_USER', passwordVariable: 'JF_PASS')]) {
             echo "Uploading immutable build artifact [${appVersion}] to centralized repository storage..."
-            sh "curl -u ${JF_USER}:${JF_PASS} -T ../php-todo-${appVersion}.tar.gz 'http://34.227.205.86:8082/artifactory/generic-local-repo/php-todo-${appVersion}.tar.gz'"
+            sh "curl -u ${JF_USER}:${JF_PASS} -T ../php-todo-${appVersion}.tar.gz 'http://34.235.130.189:8082/artifactory/generic-local-repo/php-todo-${appVersion}.tar.gz'"
             sh "rm -f ../php-todo-${appVersion}.tar.gz"
         }
     }
